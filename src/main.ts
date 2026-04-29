@@ -14,6 +14,15 @@ async function bootstrap() {
         transform: true,
     }));
 
+    const config = new DocumentBuilder()
+        .setTitle('Card Validation API')
+        .setDescription('Validate credit card numbers using the Luhn algorithm and identify card issuers.')
+        .setVersion('1.0')
+        .build();
+
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api', app, document);
+
     await app.listen(port, '0.0.0.0');
     console.log(`Application is running on: ${port}`);
 }
