@@ -31,7 +31,7 @@ card_validation/
 │   │   └── module.ts       # Module definition and dependency wiring
 │   ├── app.controller.ts   # Global handlers (e.g., Health check)
 │   ├── app.module.ts       # Root application module
-├── main.ts                 # Application entry point & bootstrap
+│   └── main.ts             # Application entry point & bootstrap
 ├── tsconfig.json           # TypeScript configuration (Strict mode)
 └── package.json            # Dependencies and scripts
 ```
@@ -94,9 +94,21 @@ npm install
 
 ### Running the Application
 ```bash
-npm run devStart
+npm run build
+npm start
 ```
 The server will start on `http://localhost:3000`.
+
+### Deploying on Render
+
+Use the following settings when creating a **Web Service** on [Render](https://render.com):
+
+| Setting | Value |
+| :--- | :--- |
+| **Build Command** | `npm install && npm run build` |
+| **Start Command** | `node dist/main.js` |
+
+> **Note**: Ensure the `PORT` environment variable is set by Render (it is injected automatically). The application binds to `0.0.0.0` so Render can route traffic correctly.
 
 ## 📡 API Endpoints
 
