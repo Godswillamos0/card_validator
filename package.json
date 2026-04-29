@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "start:prod": "node dist/main"
+    "start:prod": "node dist/main || node dist/src/main"
   },
   "keywords": [],
   "author": "",
