@@ -4,8 +4,9 @@ A robust NestJS-based API for validating credit card numbers using the Luhn algo
 
 ## Features
 
+- **Interactive Web Interface**: Built-in responsive UI with live card rendering, dynamic issuer themes, and one-click testing.
 - **Luhn Algorithm Validation**: Verifies the mathematical validity of credit card numbers.
-- **Card Type Identification**: Automatically identifies the card issuer (Visa, Mastercard, etc.) using the `credit-card-type` library.
+- **Card Type Identification**: Automatically identifies the card issuer (Visa, Mastercard, Verve, Amex, etc.) using the `credit-card-type` library.
 - **Strict TypeScript Configuration**: Built with `strict: true` enabled in `tsconfig.json` for maximum type safety.
 - **Health Monitoring**: Includes a `/health` endpoint to monitor server status and environment.
 - **Interactive Documentation**: Full OpenAPI/Swagger documentation available via Swagger UI.
@@ -19,6 +20,8 @@ The project follows a **Modular Architecture**, ensuring high maintainability an
 
 ```text
 card_validation/
+├── public/                 # Static web frontend
+│   └── index.html          # Interactive credit card validator UI
 ├── src/                    # Source code root
 │   ├── common/             # Shared utilities and helpers
 │   │   └── utils/          

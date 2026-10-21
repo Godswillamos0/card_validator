@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CardGuard | Luhn Credit Card Validator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07090e;
+      --card-bg: rgba(18, 23, 34, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text: #f0f4fc;
+      --text-muted: #8b9bb4;
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --accent: #06b6d4;
+      --success: #10b981;
+      --success-bg: rgba(16, 185, 129, 0.12);
+      --error: #ef4444;
+      --error-bg: rgba(239, 68, 68, 0.12);
+      --warning: #f59e0b;
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    /* Ambient background glow */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -20%;
+      left: 20%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(79, 70, 229, 0.15) 0%, rgba(6, 182, 212, 0.05) 50%, transparent 70%);
+      filter: blur(80px);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -15%;
+      right: 15%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, rgba(79, 70, 229, 0.05) 50%, transparent 70%);
+      filter: blur(80px);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* Header */
+    header {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+    }
+
+    .brand-title {
+      font-weight: 800;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+      background: linear-gradient(to right, #fff, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .api-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.825rem;
+      padding: 0.4rem 0.85rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--card-border);
+      border-radius: 9999px;
+      color: var(--text-muted);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #64748b;
+      border-radius: 50%;
+      transition: background-color 0.3s, box-shadow 0.3s;
+    }
+
+    .status-dot.online {
+      background-color: var(--success);
+      box-shadow: 0 0 10px var(--success);
+    }
+
+    .swagger-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.825rem;
+      font-weight: 600;
+      color: var(--text);
+      text-decoration: none;
+      padding: 0.45rem 0.9rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .swagger-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Main Container */
+    main {
+      flex: 1;
+      width: 100%;
+      max-width: 1100px;
+      margin: 2.5rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .hero-text {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.85rem;
+      background: rgba(79, 70, 229, 0.1);
+      border: 1px solid rgba(79, 70, 229, 0.3);
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      color: #818cf8;
+      font-weight: 600;
+      margin-bottom: 0.85rem;
+    }
+
+    .hero-text h1 {
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 0.75rem;
+    }
+
+    .hero-text p {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 620px;
+      margin: 0 auto;
+    }
+
+    .grid-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    @media (max-width: 880px) {
+      .grid-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Left Column: Visual Card Preview */
+    .card-preview-wrapper {
+      perspective: 1000px;
+      margin-bottom: 1.5rem;
+    }
+
+    .credit-card {
+      width: 100%;
+      max-width: 440px;
+      height: 255px;
+      margin: 0 auto;
+      border-radius: 20px;
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      background: linear-gradient(135deg, #1e2640 0%, #0d121f 100%);
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .credit-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.12) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    /* Dynamic Card Styles based on issuer */
+    .credit-card.theme-visa {
+      background: linear-gradient(135deg, #0f1c3f 0%, #1a365d 60%, #0b1120 100%);
+      box-shadow: 0 20px 40px -15px rgba(26, 54, 93, 0.5), 0 0 0 1px rgba(96, 165, 250, 0.2);
+    }
+
+    .credit-card.theme-mastercard {
+      background: linear-gradient(135deg, #2b0b00 0%, #4a1500 60%, #170700 100%);
+      box-shadow: 0 20px 40px -15px rgba(235, 0, 27, 0.4), 0 0 0 1px rgba(247, 158, 27, 0.2);
+    }
+
+    .credit-card.theme-verve {
+      background: linear-gradient(135deg, #022c22 0%, #064e3b 60%, #021a14 100%);
+      box-shadow: 0 20px 40px -15px rgba(5, 150, 105, 0.4), 0 0 0 1px rgba(16, 185, 129, 0.2);
+    }
+
+    .credit-card.theme-amex {
+      background: linear-gradient(135deg, #1e293b 0%, #334155 60%, #0f172a 100%);
+      box-shadow: 0 20px 40px -15px rgba(51, 65, 85, 0.5), 0 0 0 1px rgba(148, 163, 184, 0.25);
+    }
+
+    .credit-card.theme-discover {
+      background: linear-gradient(135deg, #431407 0%, #7c2d12 60%, #200903 100%);
+      box-shadow: 0 20px 40px -15px rgba(234, 88, 12, 0.4), 0 0 0 1px rgba(251, 146, 60, 0.25);
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    .chip-contactless {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .card-chip {
+      width: 48px;
+      height: 36px;
+      background: linear-gradient(135deg, #e6ca65 0%, #b89326 50%, #f7e494 100%);
+      border-radius: 6px;
+      position: relative;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .card-chip::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    .card-chip::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: 1px;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    .contactless-icon {
+      opacity: 0.7;
+    }
+
+    .card-issuer-badge {
+      font-weight: 800;
+      font-size: 1.15rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      font-style: italic;
+      color: #fff;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    }
+
+    .card-number-display {
+      font-family: 'Fira Code', monospace;
+      font-size: 1.45rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      color: #ffffff;
+      text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+      position: relative;
+      z-index: 2;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    .card-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      position: relative;
+      z-index: 2;
+    }
+
+    .card-holder-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-meta-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 2px;
+    }
+
+    .card-holder-name {
+      font-size: 0.875rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #ffffff;
+    }
+
+    .card-expiry-info {
+      text-align: right;
+    }
+
+    .card-expiry-value {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    /* Test Preset Buttons */
+    .presets-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      backdrop-filter: blur(12px);
+    }
+
+    .presets-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .presets-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.5rem;
+    }
+
+    .preset-btn {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 0.6rem 0.75rem;
+      color: var(--text);
+      font-size: 0.825rem;
+      font-weight: 500;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.2s;
+    }
+
+    .preset-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .preset-name {
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .preset-desc {
+      font-size: 0.725rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Right Column: Form & Validation Result */
+    .form-container {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      backdrop-filter: blur(12px);
+    }
+
+    .input-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .input-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .card-input {
+      width: 100%;
+      background: rgba(8, 12, 20, 0.8);
+      border: 1.5px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1rem 3.5rem 1rem 1.15rem;
+      color: #fff;
+      font-family: 'Fira Code', monospace;
+      font-size: 1.15rem;
+      letter-spacing: 0.08em;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .card-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.2);
+      background: rgba(10, 15, 26, 0.95);
+    }
+
+    .card-input::placeholder {
+      color: #475569;
+    }
+
+    .clear-btn {
+      position: absolute;
+      right: 1rem;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: none;
+      padding: 4px;
+      border-radius: 6px;
+    }
+
+    .clear-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .input-hint {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 0.5rem;
+      font-size: 0.785rem;
+      color: var(--text-muted);
+    }
+
+    .validate-btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--primary), #6366f1);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 0.95rem;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 16px rgba(79, 70, 229, 0.35);
+      transition: all 0.2s;
+    }
+
+    .validate-btn:hover {
+      background: linear-gradient(135deg, var(--primary-hover), #4f46e5);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(79, 70, 229, 0.45);
+    }
+
+    .validate-btn:active {
+      transform: translateY(0);
+    }
+
+    .validate-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Result Banner */
+    .result-section {
+      margin-top: 1.5rem;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-card {
+      border-radius: 14px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      border: 1px solid transparent;
+    }
+
+    .result-card.success {
+      background: var(--success-bg);
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .result-card.error {
+      background: var(--error-bg);
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .result-card.warning {
+      background: rgba(245, 158, 11, 0.12);
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .result-status-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+    }
+
+    .result-card.success .result-status-title { color: var(--success); }
+    .result-card.error .result-status-title { color: var(--error); }
+    .result-card.warning .result-status-title { color: var(--warning); }
+
+    .result-message {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .result-details-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .detail-box {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 0.75rem;
+    }
+
+    .detail-label {
+      font-size: 0.725rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+    }
+
+    .detail-value {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #fff;
+    }
+
+    /* Raw API response toggle */
+    .json-toggle {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 1.25rem;
+      padding: 0;
+    }
+
+    .json-toggle:hover {
+      color: var(--text);
+    }
+
+    .json-viewer {
+      margin-top: 0.5rem;
+      background: #05070c;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 0.85rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.785rem;
+      color: #a5b4fc;
+      max-height: 140px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    /* Footer */
+    footer {
+      max-width: 1200px;
+      margin: 3rem auto 1.5rem;
+      padding: 1.5rem 2rem;
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.825rem;
+      color: var(--text-muted);
+    }
+
+    footer a {
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <a href="/" class="brand">
+      <div class="brand-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="20" height="14" x="2" y="5" rx="2"/>
+          <line x1="2" x2="22" y1="10" y2="10"/>
+        </svg>
+      </div>
+      <span class="brand-title">CardGuard API</span>
+    </a>
+
+    <div class="nav-actions">
+      <div class="api-status" id="apiStatusPill">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">Checking API...</span>
+      </div>
+      <a href="/api" target="_blank" class="swagger-btn">
+        <span>Swagger Docs</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <line x1="10" y1="14" x2="21" y2="3"></line>
+        </svg>
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main>
+    <div class="hero-text">
+      <div class="hero-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+        NestJS • Luhn Algorithm • credit-card-type
+      </div>
+      <h1>Credit Card Validation & Issuer Detection</h1>
+      <p>Instant mathematical checksum verification using Luhn Mod-10 algorithm and automated card network identification.</p>
+    </div>
+
+    <div class="grid-container">
+
+      <!-- Left: Visual Preview & Presets -->
+      <div>
+        <div class="card-preview-wrapper">
+          <div class="credit-card" id="creditCard">
+            <div class="card-top">
+              <div class="chip-contactless">
+                <div class="card-chip"></div>
+                <svg class="contactless-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round">
+                  <path d="M8.5 16.5a5 5 0 0 1 0-9"/>
+                  <path d="M12 19a8.5 8.5 0 0 0 0-14"/>
+                  <path d="M15.5 21.5a12 12 0 0 0 0-19"/>
+                </svg>
+              </div>
+              <div class="card-issuer-badge" id="cardIssuerBadge">CARD</div>
+            </div>
+
+            <div class="card-number-display" id="cardNumberDisplay">
+              •••• •••• •••• ••••
+            </div>
+
+            <div class="card-bottom">
+              <div class="card-holder-info">
+                <span class="card-meta-label">Card Holder</span>
+                <span class="card-holder-name">VALUED CLIENT</span>
+              </div>
+              <div class="card-expiry-info">
+                <span class="card-meta-label">Expires</span>
+                <span class="card-expiry-value">12/29</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Presets -->
+        <div class="presets-card">
+          <div class="presets-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+            Quick Test Samples
+          </div>
+          <div class="presets-grid">
+            <button class="preset-btn" onclick="applyPreset('4532015112830366')">
+              <span class="preset-name">Valid Visa</span>
+              <span class="preset-desc">4532...0366 (Passed)</span>
+            </button>
+            <button class="preset-btn" onclick="applyPreset('4532015112830367')">
+              <span class="preset-name">Invalid Visa</span>
+              <span class="preset-desc">4532...0367 (Luhn Fail)</span>
+            </button>
+            <button class="preset-btn" onclick="applyPreset('5555555555554444')">
+              <span class="preset-name">Valid Mastercard</span>
+              <span class="preset-desc">5555...4444 (Passed)</span>
+            </button>
+            <button class="preset-btn" onclick="applyPreset('5061001234567890')">
+              <span class="preset-name">Valid Verve</span>
+              <span class="preset-desc">5061...7890 (Passed)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Form & Verification Result -->
+      <div>
+        <div class="form-container">
+          <form id="cardForm" onsubmit="event.preventDefault(); validateCard();">
+            <div class="input-group">
+              <label for="cardNumberInput" class="input-label">
+                <span>Enter Card Number</span>
+                <span id="digitCount" style="color: var(--text-muted); font-size: 0.75rem;">0 digits</span>
+              </label>
+              <div class="input-wrapper">
+                <input
+                  type="text"
+                  id="cardNumberInput"
+                  class="card-input"
+                  placeholder="4532 0151 1283 0366"
+                  maxlength="23"
+                  autocomplete="off"
+                />
+                <button type="button" class="clear-btn" id="clearBtn" onclick="clearInput()" title="Clear">
+                  ✕
+                </button>
+              </div>
+              <div class="input-hint">
+                <span>Supports 13 to 19 numeric digits</span>
+                <span id="detectedTypeHint" style="font-weight: 600;"></span>
+              </div>
+            </div>
+
+            <button type="submit" class="validate-btn" id="submitBtn">
+              <span class="spinner" id="btnSpinner"></span>
+              <span id="btnText">Validate Card Number</span>
+            </button>
+          </form>
+
+          <!-- Result Section -->
+          <div class="result-section" id="resultSection">
+            <div class="result-card" id="resultCard">
+              <div class="result-header">
+                <span id="resultIcon"></span>
+                <span class="result-status-title" id="resultTitle">Result</span>
+              </div>
+              <p class="result-message" id="resultMessage"></p>
+            </div>
+
+            <div class="result-details-grid">
+              <div class="detail-box">
+                <div class="detail-label">Card Issuer / Brand</div>
+                <div class="detail-value" id="resCardType">-</div>
+              </div>
+              <div class="detail-box">
+                <div class="detail-label">Luhn Checksum</div>
+                <div class="detail-value" id="resLuhnStatus">-</div>
+              </div>
+            </div>
+
+            <!-- Raw JSON toggle -->
+            <button type="button" class="json-toggle" onclick="toggleJson()">
+              <span id="jsonToggleIcon">▸</span>
+              <span>View Raw API Response</span>
+            </button>
+            <pre class="json-viewer" id="jsonViewer"></pre>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div>CardGuard Validation Service • Built with NestJS & TypeScript</div>
+    <div>
+      <a href="/api" target="_blank">OpenAPI Specs</a>
+    </div>
+  </footer>
+
+  <script>
+    const input = document.getElementById('cardNumberInput');
+    const display = document.getElementById('cardNumberDisplay');
+    const issuerBadge = document.getElementById('cardIssuerBadge');
+    const cardEl = document.getElementById('creditCard');
+    const clearBtn = document.getElementById('clearBtn');
+    const digitCount = document.getElementById('digitCount');
+    const detectedHint = document.getElementById('detectedTypeHint');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnSpinner = document.getElementById('btnSpinner');
+    const btnText = document.getElementById('btnText');
+    const resultSection = document.getElementById('resultSection');
+    const resultCard = document.getElementById('resultCard');
+    const resultTitle = document.getElementById('resultTitle');
+    const resultMessage = document.getElementById('resultMessage');
+    const resultIcon = document.getElementById('resultIcon');
+    const resCardType = document.getElementById('resCardType');
+    const resLuhnStatus = document.getElementById('resLuhnStatus');
+    const jsonViewer = document.getElementById('jsonViewer');
+
+    // Health check on load
+    async function checkHealth() {
+      const dot = document.getElementById('statusDot');
+      const text = document.getElementById('statusText');
+      try {
+        const res = await fetch('/health');
+        if (res.ok) {
+          const data = await res.json();
+          dot.classList.add('online');
+          text.textContent = `Server: Online (${data.environment || 'dev'})`;
+        } else {
+          text.textContent = 'API Degraded';
+        }
+      } catch (err) {
+        text.textContent = 'Server Offline';
+      }
+    }
+    checkHealth();
+
+    // Fast client-side issuer hint detection
+    function detectIssuerFast(digits) {
+      if (/^4/.test(digits)) return 'Visa';
+      if (/^5[1-5]/.test(digits) || /^2[2-7]/.test(digits)) return 'Mastercard';
+      if (/^(506[01]|507[89]|6500)/.test(digits)) return 'Verve';
+      if (/^3[47]/.test(digits)) return 'American Express';
+      if (/^6(?:011|5)/.test(digits)) return 'Discover';
+      return null;
+    }
+
+    function formatNumber(val) {
+      const clean = val.replace(/\D/g, '');
+      const parts = [];
+      for (let i = 0; i < clean.length; i += 4) {
+        parts.push(clean.substring(i, i + 4));
+      }
+      return parts.join(' ');
+    }
+
+    function updateCardDisplay(digits) {
+      digitCount.textContent = `${digits.length} digits`;
+      clearBtn.style.display = digits.length > 0 ? 'block' : 'none';
+
+      if (digits.length === 0) {
+        display.textContent = '•••• •••• •••• ••••';
+      } else {
+        const formatted = formatNumber(digits);
+        display.textContent = formatted;
+      }
+
+      const issuer = detectIssuerFast(digits);
+      cardEl.className = 'credit-card';
+
+      if (issuer === 'Visa') {
+        cardEl.classList.add('theme-visa');
+        issuerBadge.textContent = 'VISA';
+        detectedHint.textContent = 'Issuer: Visa';
+        detectedHint.style.color = '#60a5fa';
+      } else if (issuer === 'Mastercard') {
+        cardEl.classList.add('theme-mastercard');
+        issuerBadge.textContent = 'MASTERCARD';
+        detectedHint.textContent = 'Issuer: Mastercard';
+        detectedHint.style.color = '#f87171';
+      } else if (issuer === 'Verve') {
+        cardEl.classList.add('theme-verve');
+        issuerBadge.textContent = 'VERVE';
+        detectedHint.textContent = 'Issuer: Verve';
+        detectedHint.style.color = '#34d399';
+      } else if (issuer === 'American Express') {
+        cardEl.classList.add('theme-amex');
+        issuerBadge.textContent = 'AMEX';
+        detectedHint.textContent = 'Issuer: American Express';
+        detectedHint.style.color = '#94a3b8';
+      } else if (issuer === 'Discover') {
+        cardEl.classList.add('theme-discover');
+        issuerBadge.textContent = 'DISCOVER';
+        detectedHint.textContent = 'Issuer: Discover';
+        detectedHint.style.color = '#fb923c';
+      } else {
+        issuerBadge.textContent = 'CARD';
+        detectedHint.textContent = '';
+      }
+    }
+
+    input.addEventListener('input', (e) => {
+      const raw = e.target.value.replace(/\D/g, '');
+      const formatted = formatNumber(raw);
+      input.value = formatted;
+      updateCardDisplay(raw);
+    });
+
+    function clearInput() {
+      input.value = '';
+      updateCardDisplay('');
+      resultSection.style.display = 'none';
+      input.focus();
+    }
+
+    function applyPreset(number) {
+      input.value = formatNumber(number);
+      updateCardDisplay(number);
+      validateCard();
+    }
+
+    async function validateCard() {
+      const cleanNumber = input.value.replace(/\D/g, '');
+      if (!cleanNumber) {
+        input.focus();
+        return;
+      }
+
+      submitBtn.disabled = true;
+      btnSpinner.style.display = 'inline-block';
+      btnText.textContent = 'Verifying with API...';
+
+      try {
+        const response = await fetch('/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cardNumber: cleanNumber })
+        });
+
+        const data = await response.json();
+        renderResult(response.status, data);
+      } catch (err) {
+        renderError('Unable to connect to the validation server. Please make sure the API is running.');
+      } finally {
+        submitBtn.disabled = false;
+        btnSpinner.style.display = 'none';
+        btnText.textContent = 'Validate Card Number';
+      }
+    }
+
+    function renderResult(status, data) {
+      resultSection.style.display = 'block';
+      jsonViewer.textContent = JSON.stringify(data, null, 2);
+
+      if (status === 200) {
+        if (data.isValid) {
+          resultCard.className = 'result-card success';
+          resultTitle.textContent = 'Card Validated Successfully';
+          resultMessage.textContent = data.message || 'This card passed the Luhn checksum and is mathematically valid.';
+          resultIcon.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
+          resLuhnStatus.textContent = 'Passed (Mod-10 Check)';
+          resLuhnStatus.style.color = 'var(--success)';
+        } else {
+          resultCard.className = 'result-card error';
+          resultTitle.textContent = 'Invalid Card Number';
+          resultMessage.textContent = data.message || 'The check digit failed the Luhn checksum algorithm.';
+          resultIcon.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`;
+          resLuhnStatus.textContent = 'Failed (Checksum Mismatch)';
+          resLuhnStatus.style.color = 'var(--error)';
+        }
+
+        resCardType.textContent = data.cardType || 'Unknown Issuer';
+      } else {
+        resultCard.className = 'result-card warning';
+        resultTitle.textContent = 'Format Validation Error';
+        resultMessage.textContent = Array.isArray(data.message) ? data.message.join(' • ') : (data.message || 'Invalid format');
+        resultIcon.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+        resCardType.textContent = 'N/A';
+        resLuhnStatus.textContent = 'Rejected by Input Validator';
+        resLuhnStatus.style.color = 'var(--warning)';
+      }
+    }
+
+    function renderError(msg) {
+      resultSection.style.display = 'block';
+      resultCard.className = 'result-card error';
+      resultTitle.textContent = 'Connection Error';
+      resultMessage.textContent = msg;
+      resultIcon.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+      resCardType.textContent = 'Error';
+      resLuhnStatus.textContent = 'Error';
+    }
+
+    function toggleJson() {
+      const isVisible = jsonViewer.style.display === 'block';
+      jsonViewer.style.display = isVisible ? 'none' : 'block';
+      document.getElementById('jsonToggleIcon').textContent = isVisible ? '▸' : '▾';
+    }
+  </script>
+</body>
+</html>
